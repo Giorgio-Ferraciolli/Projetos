@@ -1,0 +1,22 @@
+[project]
+name = "rede-social-backend"
+version = "0.1.0"
+description = "API da Rede Social (projeto de estudos)"
+requires-python = ">=3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+# FastAPI usa chamadas como Depends()/File() em valores padrão de argumentos.
+ignore = ["B008"]
+
+[tool.ruff.lint.isort]
+# A pasta local alembic/ (migrations) faria o ruff tratar o pacote alembic como código do projeto.
+known-third-party = ["alembic"]

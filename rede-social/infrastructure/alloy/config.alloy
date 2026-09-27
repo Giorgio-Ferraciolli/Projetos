@@ -1,0 +1,122 @@
+// Grafana Alloy: coletor de telemetria da Rede Social (OPCIONAL).
+//
+// Sobe apenas com o perfil "observability":
+//   docker compose --profile observability up -d
+// Interface de depuração do Alloy: http://localhost:12346 (porta configurável em ALLOY_UI_PORT).
+//
+// O que já funciona:
+//   - LOGS: lê os logs (JSON) dos containers deste projeto pela API do Docker e envia
+//     para o Loki do Grafana Cloud.
+// O que está preparado:
+//   - MÉTRICAS e TRACES: recebe OTLP (gRPC :4317 / HTTP :4318) e encaminha ao Grafana
+//     Cloud. Basta instrumentar o backend com OpenTelemetry e apontar para
+//     http://alloy:4318 (veja o README, seção Observabilidade).
+//
+// As credenciais vêm de variáveis de ambiente (arquivo .env), nunca deste arquivo.
+// Sem elas, coalesce() usa endereços locais de exemplo: o Alloy sobe normalmente e
+// apenas registra avisos de envio até as variáveis do Grafana Cloud serem preenchidas.
+
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+// ---------------------------------------------------------------------------
+// Logs dos containers -> Loki
+// ---------------------------------------------------------------------------
+
+// Descobre apenas os containers do projeto "rede-social" (nome do projeto no Compose).
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+
+  filter {
+    name   = "label"
+    values = ["com.docker.compose.project=rede-social"]
+  }
+}
+
+// Transforma metadados do Docker em labels úteis para filtrar no Grafana.
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  labels     = { app = "rede-social" }
+  forward_to = [loki.process.backend_json.receiver]
+}
+
+// O backend escreve logs em JSON: extraímos o nível (info, warning, error...) como label.
+loki.process "backend_json" {
+  stage.json {
+    expressions = { level = "level" }
+  }
+
+  stage.labels {
+    values = { level = "" }
+  }
+
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = coalesce(sys.env("GRAFANA_CLOUD_LOKI_URL"), "http://localhost:3100/loki/api/v1/push")
+
+    basic_auth {
+      username = coalesce(sys.env("GRAFANA_CLOUD_LOKI_USERNAME"), "not-configured")
+      password = coalesce(sys.env("GRAFANA_CLOUD_API_TOKEN"), "not-configured")
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Métricas e traces (OpenTelemetry / OTLP) -> Grafana Cloud
+// ---------------------------------------------------------------------------
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+// Agrupa os dados em lotes antes de enviar (menos requisições para o Grafana Cloud).
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.exporter.otlphttp.grafana_cloud.input]
+    traces  = [otelcol.exporter.otlphttp.grafana_cloud.input]
+  }
+}
+
+otelcol.auth.basic "grafana_cloud" {
+  username = coalesce(sys.env("GRAFANA_CLOUD_OTLP_USERNAME"), "not-configured")
+  password = coalesce(sys.env("GRAFANA_CLOUD_API_TOKEN"), "not-configured")
+}
+
+otelcol.exporter.otlphttp "grafana_cloud" {
+  client {
+    endpoint = coalesce(sys.env("GRAFANA_CLOUD_OTLP_ENDPOINT"), "http://localhost:4318")
+    auth     = otelcol.auth.basic.grafana_cloud.handler
+  }
+}

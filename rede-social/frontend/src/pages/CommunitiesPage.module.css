@@ -1,0 +1,26 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.createLink {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  height: 40px;
+  padding: 0 var(--space-5);
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+.createLink:hover {
+  text-decoration: none;
+  background: var(--color-primary-hover);
+}
+
+.loadMore {
+  align-self: center;
+}

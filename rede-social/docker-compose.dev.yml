@@ -1,0 +1,19 @@
+# Modo desenvolvimento: a API recarrega sozinha ao salvar arquivos Python.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# Para o frontend com recarga instantânea (HMR), rode o Vite fora do Docker:
+#   cd frontend && npm install && npm run dev      ->  http://localhost:5173
+# O Vite repassa /api e /media para http://localhost:8000 (veja frontend/vite.config.ts).
+
+services:
+  backend:
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    environment:
+      LOG_FORMAT: text
+      # Pastas montadas a partir do Windows/macOS não avisam o container sobre mudanças
+      # nos arquivos; com polling, o uvicorn verifica periodicamente.
+      WATCHFILES_FORCE_POLLING: "true"
+    volumes:
+      # O código do host substitui o código copiado para a imagem.
+      - ./backend:/app

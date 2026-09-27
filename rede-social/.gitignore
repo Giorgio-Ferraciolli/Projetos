@@ -1,0 +1,26 @@
+# Configuração local (pode conter segredos). Use .env.example como modelo.
+.env
+*.env.local
+
+# Certificados de proxy corporativo (específicos de cada máquina)
+infrastructure/certs/*.crt
+infrastructure/certs/*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+backend/media/
+
+# Node / frontend (veja também frontend/.gitignore)
+node_modules/
+frontend/dist/
+coverage/
+
+# Editores e sistema
+.idea/
+.DS_Store
+Thumbs.db

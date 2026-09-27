@@ -1,0 +1,126 @@
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.brandPanel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(150deg, #8b4dff 0%, #6a24d4 55%, #3f1a78 100%);
+}
+
+.brandContent {
+  position: relative;
+  z-index: 1;
+  max-width: 440px;
+}
+
+.tagline {
+  margin-top: var(--space-8);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.highlights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0;
+  margin: var(--space-8) 0 0;
+  font-size: var(--text-lg);
+  list-style: none;
+  opacity: 0.92;
+}
+
+.highlights li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* Círculos decorativos com desfoque. */
+.orb {
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 420px;
+  height: 420px;
+  background: rgb(255 255 255 / 0.12);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+
+.orbSecondary {
+  top: auto;
+  right: auto;
+  bottom: -160px;
+  left: -100px;
+  width: 360px;
+  height: 360px;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.formPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+}
+
+.card {
+  width: 100%;
+  max-width: 460px;
+  padding: var(--space-8);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.mobileLogo {
+  display: none;
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: var(--text-2xl);
+}
+
+.subtitle {
+  margin: var(--space-1) 0 var(--space-6);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 899px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .brandPanel {
+    display: none;
+  }
+
+  .mobileLogo {
+    display: block;
+  }
+}
+
+@media (max-width: 479px) {
+  .formPanel {
+    align-items: flex-start;
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .card {
+    padding: var(--space-6) var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+}

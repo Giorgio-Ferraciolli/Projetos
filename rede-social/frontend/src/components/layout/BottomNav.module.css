@@ -1,0 +1,42 @@
+.bottomNav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .bottomNav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgb(255 255 255 / 0.96);
+    border-top: 1px solid var(--color-border);
+    backdrop-filter: blur(12px);
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.item:hover {
+  text-decoration: none;
+}
+
+.label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.active {
+  color: var(--color-primary);
+}

@@ -1,0 +1,131 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  color: var(--color-primary);
+  text-align: center;
+  cursor: pointer;
+  background: var(--color-primary-soft);
+  border: 2px dashed var(--brand-200);
+  border-radius: var(--radius-md);
+  transition:
+    background-color var(--transition),
+    border-color var(--transition);
+}
+
+.dropzone:hover {
+  background: var(--brand-100);
+  border-color: var(--brand-300);
+}
+
+.wrapper:has(input:focus-visible) .dropzone,
+.wrapper:has(input:focus-visible) .changeButton {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.dropzoneLabel {
+  font-weight: 600;
+}
+
+.dropzoneHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.wide {
+  min-height: 160px;
+}
+
+.circle {
+  width: 136px;
+  height: 136px;
+  min-height: 0;
+  padding: var(--space-3);
+  border-radius: 50%;
+}
+
+.circle .dropzoneHint {
+  display: none;
+}
+
+.preview {
+  position: relative;
+  overflow: hidden;
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+}
+
+.preview.wide img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.preview.circle {
+  padding: 0;
+  border-radius: 50%;
+}
+
+.preview.circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewActions {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.circle .previewActions {
+  top: auto;
+  right: 50%;
+  bottom: var(--space-2);
+  transform: translateX(50%);
+}
+
+.changeButton,
+.removeButton {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: rgb(26 23 37 / 0.7);
+  border: none;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(4px);
+}
+
+.removeButton {
+  width: 32px;
+  justify-content: center;
+  padding: 0;
+}
+
+.changeButton:hover,
+.removeButton:hover {
+  background: rgb(26 23 37 / 0.85);
+}
+
+.error {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-danger);
+}

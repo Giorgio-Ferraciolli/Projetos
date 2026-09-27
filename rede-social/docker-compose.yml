@@ -1,0 +1,112 @@
+# Ambiente completo da Rede Social.
+#   Subir:  docker compose up -d --build
+#   Parar:  docker compose down
+# Os valores padrão (${VAR:-padrão}) permitem rodar sem .env; veja .env.example.
+
+name: rede-social
+
+x-db-env: &db-env
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_NAME: ${MYSQL_DATABASE:-rede_social}
+  DB_USER: ${MYSQL_USER:-rede_social}
+  DB_PASSWORD: ${MYSQL_PASSWORD:-rede_social_dev_password}
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-rede_social}
+      MYSQL_USER: ${MYSQL_USER:-rede_social}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-rede_social_dev_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_dev_password}
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./infrastructure/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Conecta via TCP: durante a inicialização o MySQL temporário não aceita TCP,
+      # então o serviço só fica "healthy" quando o servidor definitivo está pronto.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+      additional_contexts:
+        certs: ./infrastructure/certs
+      args:
+        INSTALL_DEV: "true"
+    restart: unless-stopped
+    environment:
+      <<: *db-env
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-insecure-secret-key-change-me-0123456789}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-5}
+      MEDIA_ROOT: /app/media
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      mysql:
+        condition: service_healthy
+    labels:
+      # Usado pelo Grafana Alloy para identificar os logs deste serviço.
+      app.rede-social.service: backend
+
+  frontend:
+    build:
+      context: ./frontend
+      additional_contexts:
+        certs: ./infrastructure/certs
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    labels:
+      app.rede-social.service: frontend
+
+  # Coletor de telemetria (opcional). Só sobe com: docker compose --profile observability up -d
+  alloy:
+    image: grafana/alloy:v1.20.0
+    profiles: ["observability"]
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    environment:
+      GRAFANA_CLOUD_LOKI_URL: ${GRAFANA_CLOUD_LOKI_URL:-}
+      GRAFANA_CLOUD_LOKI_USERNAME: ${GRAFANA_CLOUD_LOKI_USERNAME:-}
+      GRAFANA_CLOUD_OTLP_ENDPOINT: ${GRAFANA_CLOUD_OTLP_ENDPOINT:-}
+      GRAFANA_CLOUD_OTLP_USERNAME: ${GRAFANA_CLOUD_OTLP_USERNAME:-}
+      GRAFANA_CLOUD_API_TOKEN: ${GRAFANA_CLOUD_API_TOKEN:-}
+    ports:
+      # A porta 12345 costuma estar ocupada por um Alloy instalado no próprio host.
+      - "${ALLOY_UI_PORT:-12346}:12345"
+    volumes:
+      - ./infrastructure/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy_data:/var/lib/alloy/data
+
+volumes:
+  mysql_data:
+  media_data:
+  alloy_data:

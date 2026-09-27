@@ -1,0 +1,10 @@
+# Finais de linha LF no repositório. Scripts executados dentro dos containers Linux
+# (entrypoint e init do MySQL) quebram com CRLF, então forçamos LF também no checkout.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff2 binary
